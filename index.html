@@ -1,0 +1,1070 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ananya Manchinda — 3D Game & Animation Portfolio</title>
+  <meta name="description" content="3D Portfolio ของ Ananya Manchinda นักศึกษาปี 4 เอกเกมและแอนิเมชัน" />
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&family=Orbitron:wght@500;600;700;800&display=swap');
+
+    :root {
+      --bg: #05060b;
+      --panel: rgba(11, 13, 23, .84);
+      --line: rgba(255,255,255,.13);
+      --text: #f7f8ff;
+      --muted: #a6abc0;
+      --cyan: #5ee7ff;
+      --pink: #ff5bd6;
+      --purple: #9b7cff;
+      --green: #67f8a4;
+      --shadow: 0 20px 80px rgba(0,0,0,.55);
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      background:
+        radial-gradient(circle at 15% 10%, rgba(92, 72, 255, .16), transparent 28%),
+        radial-gradient(circle at 90% 20%, rgba(0, 220, 255, .10), transparent 25%),
+        var(--bg);
+      color: var(--text);
+      font-family: Kanit, system-ui, sans-serif;
+      overflow-x: hidden;
+    }
+
+    #scene {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: auto;
+    }
+
+    .noise {
+      position: fixed;
+      inset: 0;
+      z-index: 1;
+      pointer-events: none;
+      opacity: .035;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.7'/%3E%3C/svg%3E");
+    }
+
+    .topbar {
+      position: fixed;
+      z-index: 10;
+      top: 18px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: min(1120px, calc(100% - 32px));
+      padding: 12px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border: 1px solid var(--line);
+      background: rgba(7,8,15,.65);
+      backdrop-filter: blur(18px);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+    }
+
+    .brand {
+      font-family: Orbitron, sans-serif;
+      font-size: 13px;
+      letter-spacing: 2px;
+    }
+
+    .brand span { color: var(--cyan); }
+
+    .nav {
+      display: flex;
+      gap: 7px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .nav button, .hud button {
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.045);
+      color: var(--text);
+      border-radius: 11px;
+      padding: 8px 12px;
+      cursor: pointer;
+      font: inherit;
+      transition: .2s ease;
+    }
+
+    .nav button:hover, .hud button:hover {
+      border-color: var(--cyan);
+      color: var(--cyan);
+      transform: translateY(-1px);
+    }
+
+    .hero {
+      position: relative;
+      z-index: 3;
+      min-height: 100vh;
+      width: min(1120px, calc(100% - 32px));
+      margin: auto;
+      display: flex;
+      align-items: center;
+      pointer-events: none;
+    }
+
+    .intro {
+      max-width: 570px;
+      margin-top: 60px;
+      pointer-events: auto;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      gap: 8px;
+      align-items: center;
+      color: var(--cyan);
+      font-family: Orbitron, sans-serif;
+      font-size: 11px;
+      letter-spacing: 2px;
+      border: 1px solid rgba(94,231,255,.28);
+      background: rgba(94,231,255,.06);
+      border-radius: 999px;
+      padding: 8px 12px;
+    }
+
+    .eyebrow::before {
+      content: "";
+      width: 7px;
+      height: 7px;
+      background: var(--green);
+      border-radius: 50%;
+      box-shadow: 0 0 15px var(--green);
+    }
+
+    h1 {
+      font-family: Orbitron, sans-serif;
+      font-size: clamp(42px, 7vw, 82px);
+      line-height: .98;
+      margin: 22px 0 18px;
+      letter-spacing: -3px;
+    }
+
+    h1 span {
+      display: block;
+      background: linear-gradient(90deg, #fff, var(--cyan), var(--pink));
+      -webkit-background-clip: text;
+      color: transparent;
+    }
+
+    .lead {
+      color: var(--muted);
+      font-size: clamp(16px, 2vw, 20px);
+      line-height: 1.75;
+      max-width: 510px;
+    }
+
+    .hint {
+      margin-top: 26px;
+      color: #dfe4f7;
+      font-size: 13px;
+      opacity: .85;
+    }
+
+    .hint kbd {
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.07);
+      padding: 3px 7px;
+      border-radius: 6px;
+      margin: 0 2px;
+    }
+
+    .hud {
+      position: fixed;
+      z-index: 8;
+      left: 22px;
+      bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      max-width: calc(100% - 44px);
+      pointer-events: auto;
+    }
+
+    .status {
+      font-size: 11px;
+      color: var(--muted);
+      border: 1px solid var(--line);
+      background: rgba(7,8,15,.72);
+      backdrop-filter: blur(12px);
+      padding: 9px 12px;
+      border-radius: 10px;
+    }
+
+    .scroll {
+      position: absolute;
+      bottom: 28px;
+      left: 50%;
+      transform: translateX(-50%);
+      color: var(--muted);
+      font-size: 11px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      animation: bob 1.8s infinite ease-in-out;
+    }
+
+    @keyframes bob {
+      50% { transform: translate(-50%, 8px); }
+    }
+
+    .section {
+      position: relative;
+      z-index: 4;
+      min-height: 100vh;
+      width: min(1120px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 110px 0;
+      pointer-events: none;
+    }
+
+    .section > * { pointer-events: auto; }
+
+    .panel {
+      max-width: 720px;
+      padding: 28px;
+      border: 1px solid var(--line);
+      background: linear-gradient(135deg, rgba(11,13,23,.91), rgba(11,13,23,.68));
+      backdrop-filter: blur(18px);
+      border-radius: 24px;
+      box-shadow: var(--shadow);
+    }
+
+    .section h2 {
+      font-family: Orbitron, sans-serif;
+      font-size: clamp(28px, 5vw, 48px);
+      margin: 0 0 14px;
+    }
+
+    .section h2 span { color: var(--cyan); }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0,1fr));
+      gap: 14px;
+      margin-top: 20px;
+    }
+
+    .card {
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.035);
+      border-radius: 16px;
+      padding: 18px;
+    }
+
+    .card b {
+      display: block;
+      margin-bottom: 6px;
+      font-family: Orbitron, sans-serif;
+      font-size: 12px;
+      color: var(--cyan);
+    }
+
+    .card p {
+      color: var(--muted);
+      margin: 0;
+      line-height: 1.65;
+      font-size: 14px;
+    }
+
+    .projects {
+      width: 100%;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0,1fr));
+      gap: 16px;
+    }
+
+    .project {
+      min-height: 190px;
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      background: rgba(10,12,20,.78);
+      padding: 20px;
+      backdrop-filter: blur(14px);
+      transition: .25s ease;
+    }
+
+    .project:hover {
+      transform: translateY(-6px);
+      border-color: rgba(94,231,255,.5);
+      box-shadow: 0 20px 55px rgba(0,0,0,.4);
+    }
+
+    .project .tag {
+      color: var(--pink);
+      font-size: 11px;
+      letter-spacing: 1px;
+      font-family: Orbitron, sans-serif;
+    }
+
+    .project h3 {
+      margin: 12px 0 8px;
+      font-size: 20px;
+    }
+
+    .project p {
+      color: var(--muted);
+      line-height: 1.6;
+      margin: 0;
+      font-size: 14px;
+    }
+
+    footer {
+      position: relative;
+      z-index: 4;
+      padding: 70px 20px 100px;
+      text-align: center;
+      color: var(--muted);
+    }
+
+    #loader {
+      position: fixed;
+      inset: 0;
+      z-index: 20;
+      display: grid;
+      place-items: center;
+      background: #05060b;
+      transition: opacity .5s ease;
+    }
+
+    #loader.hidden { opacity: 0; pointer-events: none; }
+
+    .loaderBox { text-align: center; }
+    .loaderTitle {
+      font-family: Orbitron, sans-serif;
+      letter-spacing: 3px;
+      font-size: 13px;
+    }
+    .bar {
+      width: 180px;
+      height: 2px;
+      margin-top: 14px;
+      background: rgba(255,255,255,.12);
+      overflow: hidden;
+    }
+    .bar::after {
+      content: "";
+      display: block;
+      width: 45%;
+      height: 100%;
+      background: linear-gradient(90deg, var(--cyan), var(--pink));
+      animation: load 1.1s infinite ease-in-out;
+    }
+    @keyframes load {
+      from { transform: translateX(-120%); }
+      to { transform: translateX(330%); }
+    }
+
+    .modal {
+      position: fixed;
+      inset: 0;
+      z-index: 30;
+      display: none;
+      place-items: center;
+      padding: 20px;
+      background: rgba(0,0,0,.68);
+      backdrop-filter: blur(12px);
+    }
+
+    .modal.show { display: grid; }
+
+    .modalBox {
+      width: min(650px, 100%);
+      max-height: 82vh;
+      overflow: auto;
+      padding: 26px;
+      border: 1px solid rgba(94,231,255,.28);
+      border-radius: 22px;
+      background: #0a0c15;
+      box-shadow: 0 30px 100px rgba(0,0,0,.7);
+    }
+
+    .modalTop {
+      display: flex;
+      justify-content: space-between;
+      gap: 20px;
+      align-items: flex-start;
+    }
+
+    .close {
+      border: 1px solid var(--line);
+      background: transparent;
+      color: white;
+      border-radius: 10px;
+      width: 38px;
+      height: 38px;
+      cursor: pointer;
+      font-size: 18px;
+    }
+
+    .modalBox h2 {
+      font-family: Orbitron, sans-serif;
+      margin: 0 0 8px;
+    }
+
+    .modalBox p, .modalBox li {
+      color: var(--muted);
+      line-height: 1.75;
+    }
+
+    .tip {
+      margin-top: 18px;
+      padding: 12px 14px;
+      border-left: 2px solid var(--cyan);
+      background: rgba(94,231,255,.05);
+      color: #dcefff;
+      font-size: 13px;
+    }
+
+    @media (max-width: 850px) {
+      .hero { align-items: flex-end; padding-bottom: 90px; }
+      .intro { max-width: 70vw; }
+      .projects { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 620px) {
+      .topbar { align-items: flex-start; }
+      .nav { display: none; }
+      .intro { max-width: 100%; }
+      h1 { font-size: 43px; }
+      .grid { grid-template-columns: 1fr; }
+      .panel { padding: 21px; }
+      .hud { left: 12px; bottom: 12px; }
+      .scroll { display: none; }
+    }
+  </style>
+</head>
+
+<body>
+  <div id="loader">
+    <div class="loaderBox">
+      <div class="loaderTitle">LOADING 3D PORTFOLIO</div>
+      <div class="bar"></div>
+    </div>
+  </div>
+
+  <canvas id="scene"></canvas>
+  <div class="noise"></div>
+
+  <header class="topbar">
+    <div class="brand">ANANYA<span>.3D</span></div>
+    <nav class="nav">
+      <button data-action="about">ABOUT</button>
+      <button data-action="projects">PROJECTS</button>
+      <button data-action="skills">SKILLS</button>
+      <button data-action="contact">CONTACT</button>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero" id="home">
+      <div class="intro">
+        <div class="eyebrow">GAME & ANIMATION · 3D ARTIST</div>
+        <h1>ANANYA<br><span>MANCHINDA</span></h1>
+        <div class="lead">
+          สวัสดีค่ะ ฉัน <strong>อนัญญา มั่นจินดา</strong><br>
+          นักศึกษาชั้นปีที่ 4 เอกเกมและแอนิเมชัน
+          จากมหาวิทยาลัยราชมงคลรัตนโกสินทร์
+        </div>
+        <div class="hint">
+          ทดลองเล่นกับตู้เกม 3D ด้านขวา · ลากเมาส์เพื่อหมุนกล้อง · คลิกปุ่มบนตู้เพื่อเปิดเมนู
+        </div>
+      </div>
+      <div class="scroll">SCROLL TO EXPLORE</div>
+    </section>
+
+    <section class="section" id="about">
+      <div class="panel">
+        <h2>About <span>Me</span></h2>
+        <p>
+          ฉันสนใจงานด้าน <strong>3D Modeling, Game Development และ Animation</strong>
+          และชอบเปลี่ยนไอเดียให้กลายเป็นงานภาพที่สามารถนำไปใช้งานจริงในเกมหรือสื่อดิจิทัลได้
+        </p>
+        <div class="grid">
+          <div class="card"><b>EDUCATION</b><p>มหาวิทยาลัยราชมงคลรัตนโกสินทร์<br>สาขาออกแบบสื่อดิจิทัล · เอกเกมและแอนิเมชัน<br>นักศึกษาชั้นปีที่ 4</p></div>
+          <div class="card"><b>INTEREST</b><p>3D Modeling · Texturing · Game Art · Animation · Interactive Media</p></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="projects">
+      <div class="panel" style="max-width:none">
+        <h2>Selected <span>Projects</span></h2>
+        <div class="projects">
+          <article class="project">
+            <div class="tag">3D GAME · THESIS</div>
+            <h3>Lost Beneath the Eternal Sun</h3>
+            <p>โปรเจกต์เกม 3D ที่ออกแบบโลก ตัวละคร และองค์ประกอบสำหรับประสบการณ์การเล่นที่เน้นการแก้ปัญหา</p>
+          </article>
+          <article class="project">
+            <div class="tag">3D MODELING</div>
+            <h3>Environment & Props</h3>
+            <p>การสร้างโมเดล 3D พร้อมวัสดุ PBR, UV และ Texture เพื่อให้วัตถุมีรายละเอียดและตอบโจทย์การใช้งานในเกม</p>
+          </article>
+          <article class="project">
+            <div class="tag">GAME DEVELOPMENT</div>
+            <h3>Unity Interactive Work</h3>
+            <p>การนำโมเดล แอนิเมชัน แสง และระบบ Interactive มาประกอบเป็นฉากหรือประสบการณ์แบบเรียลไทม์</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="skills">
+      <div class="panel">
+        <h2>My <span>Skills</span></h2>
+        <div class="grid">
+          <div class="card"><b>3D</b><p>Autodesk Maya · 3D Modeling · UV Mapping · PBR Texturing · Basic Rigging</p></div>
+          <div class="card"><b>GAME</b><p>Unity · Scene Setup · Materials · Lighting · Interactive Prototype</p></div>
+          <div class="card"><b>CREATIVE</b><p>Game Design · Visual Design · Storytelling · Problem Solving</p></div>
+          <div class="card"><b>SOFT SKILLS</b><p>Teamwork · Communication · Presentation · Willingness to Learn</p></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="contact">
+      <div class="panel">
+        <h2>Let's <span>Connect</span></h2>
+        <p>ขอบคุณที่เข้ามาชม Portfolio ของฉัน หากสนใจผลงานหรืออยากพูดคุยเกี่ยวกับงาน Game / 3D / Animation สามารถติดต่อได้ผ่านช่องทางด้านล่าง</p>
+        <div class="grid">
+          <div class="card"><b>EMAIL</b><p>ใส่อีเมลของคุณที่นี่</p></div>
+          <div class="card"><b>GITHUB</b><p>ใส่ GitHub / github.io ของคุณที่นี่</p></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>© 2026 ANANYA MANCHINDA · GAME & ANIMATION PORTFOLIO</footer>
+
+  <div class="modal" id="modal">
+    <div class="modalBox">
+      <div class="modalTop">
+        <div>
+          <div class="eyebrow" id="modalEyebrow">MENU</div>
+          <h2 id="modalTitle">Title</h2>
+        </div>
+        <button class="close" id="closeModal">×</button>
+      </div>
+      <div id="modalContent"></div>
+    </div>
+  </div>
+
+  <div class="hud">
+    <div class="status" id="modelStatus">3D MODEL: loading…</div>
+    <button id="resetCamera">Reset Camera</button>
+    <button id="toggleAuto">Auto Rotate: ON</button>
+  </div>
+
+  <!--
+    ==========================================================
+    THREE.JS 3D PORTFOLIO
+    ==========================================================
+    ใช้ Three.js ผ่าน CDN จึงยังคงเป็น "index.html ไฟล์เดียว"
+
+    ถ้าต้องการใช้ GLB ของคุณเอง:
+    1) อัปโหลดไฟล์ GLB ไปยัง GitHub repository
+    2) เปลี่ยนค่า MODEL_URL ด้านล่างเป็น URL ของไฟล์ .glb
+    ตัวอย่าง:
+    const MODEL_URL = './models/my-3d-model.glb';
+
+    หากไม่เปลี่ยน MODEL_URL หน้าเว็บจะใช้โมเดลตัวอย่าง
+    DamagedHelmet.glb เพื่อแสดง PBR ชัดเจน
+  -->
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"
+    }
+  }
+  </script>
+
+  <script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+    import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+    import { RGBELoader } from 'three/addons/loaders/RGBELoader.js';
+
+    // =========================================================
+    // 1. ตั้งค่า GLB MODEL ของคุณตรงนี้
+    // =========================================================
+    const MODEL_URL =
+      'https://threejs.org/examples/models/gltf/DamagedHelmet/glTF-Binary/DamagedHelmet.glb';
+
+    // ตัวอย่างสำหรับ GitHub Pages:
+    // const MODEL_URL = './models/portfolio-model.glb';
+
+    const canvas = document.querySelector('#scene');
+    const status = document.querySelector('#modelStatus');
+    const loaderScreen = document.querySelector('#loader');
+
+    const renderer = new THREE.WebGLRenderer({
+      canvas,
+      antialias: true,
+      alpha: true
+    });
+
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.15;
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+    const scene = new THREE.Scene();
+
+    const camera = new THREE.PerspectiveCamera(
+      38,
+      window.innerWidth / window.innerHeight,
+      0.1,
+      100
+    );
+    camera.position.set(5.2, 3.2, 7.4);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.055;
+    controls.minDistance = 4.2;
+    controls.maxDistance = 12;
+    controls.target.set(0, 1.7, 0);
+    controls.maxPolarAngle = Math.PI * 0.82;
+    controls.autoRotate = true;
+    controls.autoRotateSpeed = 0.8;
+
+    // --------------------------
+    // Lighting / PBR environment
+    // --------------------------
+    const hemi = new THREE.HemisphereLight(0xbfd8ff, 0x11111a, 1.4);
+    scene.add(hemi);
+
+    const key = new THREE.DirectionalLight(0xffffff, 4.2);
+    key.position.set(4, 7, 5);
+    key.castShadow = true;
+    key.shadow.mapSize.set(2048, 2048);
+    scene.add(key);
+
+    const rim = new THREE.PointLight(0x5ee7ff, 25, 10, 2);
+    rim.position.set(-3.5, 3.5, 2);
+    scene.add(rim);
+
+    const pink = new THREE.PointLight(0xff5bd6, 20, 9, 2);
+    pink.position.set(3, 2, -2);
+    scene.add(pink);
+
+    // Procedural dark studio floor
+    const floor = new THREE.Mesh(
+      new THREE.CircleGeometry(12, 64),
+      new THREE.MeshStandardMaterial({
+        color: 0x070911,
+        roughness: .82,
+        metalness: .18
+      })
+    );
+    floor.rotation.x = -Math.PI / 2;
+    floor.position.y = -1.55;
+    floor.receiveShadow = true;
+    scene.add(floor);
+
+    const grid = new THREE.GridHelper(18, 36, 0x263047, 0x111522);
+    grid.position.y = -1.53;
+    grid.material.transparent = true;
+    grid.material.opacity = .42;
+    scene.add(grid);
+
+    // Background stars
+    const starGeo = new THREE.BufferGeometry();
+    const starCount = 1000;
+    const starPos = new Float32Array(starCount * 3);
+    for (let i = 0; i < starCount; i++) {
+      starPos[i * 3] = (Math.random() - .5) * 28;
+      starPos[i * 3 + 1] = Math.random() * 14 - 2;
+      starPos[i * 3 + 2] = (Math.random() - .5) * 28;
+    }
+    starGeo.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
+    const stars = new THREE.Points(
+      starGeo,
+      new THREE.PointsMaterial({
+        color: 0x9fcfff,
+        size: .025,
+        transparent: true,
+        opacity: .8
+      })
+    );
+    scene.add(stars);
+
+    // --------------------------
+    // Arcade cabinet
+    // --------------------------
+    const arcade = new THREE.Group();
+    scene.add(arcade);
+
+    const neonMaterial = (color, emissive = color, intensity = 3) =>
+      new THREE.MeshStandardMaterial({
+        color,
+        emissive,
+        emissiveIntensity: intensity,
+        roughness: .3,
+        metalness: .4
+      });
+
+    const bodyMat = new THREE.MeshStandardMaterial({
+      color: 0x121522,
+      roughness: .25,
+      metalness: .72
+    });
+
+    const blackMat = new THREE.MeshStandardMaterial({
+      color: 0x03040a,
+      roughness: .38,
+      metalness: .25
+    });
+
+    function box(w, h, d, mat, x=0, y=0, z=0) {
+      const m = new THREE.Mesh(new THREE.BoxGeometry(w,h,d), mat);
+      m.position.set(x,y,z);
+      m.castShadow = true;
+      m.receiveShadow = true;
+      arcade.add(m);
+      return m;
+    }
+
+    // Main arcade silhouette
+    box(2.8, 3.0, 1.15, bodyMat, 0, 0.05, 0);
+    box(2.5, 1.55, 1.2, bodyMat, 0, 2.05, 0);
+
+    // angled control deck
+    const deck = box(2.75, .18, 1.45, blackMat, 0, 1.08, .55);
+    deck.rotation.x = -0.15;
+
+    // screen frame
+    box(2.25, 1.28, .12, blackMat, 0, 2.1, .61);
+
+    // screen
+    const screen = box(1.96, 1.0, .06, neonMaterial(0x071421, 0x16cfff, 1.8), 0, 2.1, .69);
+
+    // screen glow panel
+    const screenCanvas = document.createElement('canvas');
+    screenCanvas.width = 900;
+    screenCanvas.height = 500;
+    const ctx = screenCanvas.getContext('2d');
+    const tex = new THREE.CanvasTexture(screenCanvas);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    const screenMat = new THREE.MeshBasicMaterial({ map: tex });
+    screen.material = screenMat;
+
+    function drawScreen(time=0) {
+      ctx.fillStyle = '#050b14';
+      ctx.fillRect(0,0,900,500);
+
+      const g = ctx.createLinearGradient(0,0,900,500);
+      g.addColorStop(0, '#5ee7ff');
+      g.addColorStop(.5, '#9b7cff');
+      g.addColorStop(1, '#ff5bd6');
+
+      ctx.globalAlpha = .18;
+      ctx.fillStyle = g;
+      ctx.fillRect(0,0,900,500);
+      ctx.globalAlpha = 1;
+
+      ctx.strokeStyle = 'rgba(94,231,255,.16)';
+      for(let y=20;y<500;y+=28){
+        ctx.beginPath();
+        ctx.moveTo(0,y);
+        ctx.lineTo(900,y);
+        ctx.stroke();
+      }
+
+      ctx.font = '700 52px Orbitron, sans-serif';
+      ctx.fillStyle = '#ffffff';
+      ctx.textAlign = 'center';
+      ctx.fillText('ANANYA 3D', 450, 210);
+
+      ctx.font = '500 24px Kanit, sans-serif';
+      ctx.fillStyle = '#5ee7ff';
+      ctx.fillText('GAME & ANIMATION PORTFOLIO', 450, 260);
+
+      const pulse = .65 + Math.sin(time * .004) * .25;
+      ctx.globalAlpha = pulse;
+      ctx.font = '500 20px Kanit, sans-serif';
+      ctx.fillStyle = '#ffffff';
+      ctx.fillText('CLICK THE BUTTONS TO EXPLORE', 450, 330);
+      ctx.globalAlpha = 1;
+
+      tex.needsUpdate = true;
+    }
+
+    // side neon strips
+    const stripMat = neonMaterial(0x5ee7ff, 0x5ee7ff, 5);
+    box(.07, 3.2, .08, stripMat, -1.38, .05, .61);
+    box(.07, 3.2, .08, neonMaterial(0xff5bd6, 0xff5bd6, 5), 1.38, .05, .61);
+
+    // marquee
+    box(2.5, .38, .15, neonMaterial(0x27194a, 0x9b7cff, 3), 0, 2.92, .64);
+
+    // buttons
+    const buttons = [];
+    const buttonData = [
+      {label:'ABOUT', color:0x5ee7ff, x:-.75, z:.73, action:'about'},
+      {label:'WORK', color:0xff5bd6, x:-.25, z:.73, action:'projects'},
+      {label:'SKILL', color:0x67f8a4, x:.25, z:.73, action:'skills'},
+      {label:'CONTACT', color:0x9b7cff, x:.75, z:.73, action:'contact'}
+    ];
+
+    buttonData.forEach((b, i) => {
+      const mat = neonMaterial(b.color, b.color, 2.8);
+      const mesh = new THREE.Mesh(
+        new THREE.CylinderGeometry(.17, .17, .11, 32),
+        mat
+      );
+      mesh.rotation.x = Math.PI / 2;
+      mesh.position.set(b.x, 1.27, b.z);
+      mesh.userData = { ...b, baseY:1.27, baseZ:b.z, index:i };
+      mesh.castShadow = true;
+      arcade.add(mesh);
+      buttons.push(mesh);
+    });
+
+    // joystick
+    const stickBase = new THREE.Mesh(
+      new THREE.CylinderGeometry(.23,.23,.10,32),
+      blackMat
+    );
+    stickBase.position.set(1.02,1.23,.58);
+    arcade.add(stickBase);
+
+    const stick = new THREE.Mesh(
+      new THREE.CylinderGeometry(.055,.055,.45,20),
+      neonMaterial(0xffffff,0x9b7cff,3)
+    );
+    stick.position.set(1.02,1.48,.58);
+    stick.rotation.z = -.12;
+    stick.castShadow = true;
+    arcade.add(stick);
+
+    const knob = new THREE.Mesh(
+      new THREE.SphereGeometry(.14,24,16),
+      neonMaterial(0xff5bd6,0xff5bd6,3)
+    );
+    knob.position.set(1.075,1.69,.58);
+    arcade.add(knob);
+
+    // pedestal
+    box(3.15, .16, 1.5, blackMat, 0, -1.48, 0);
+    box(2.85, .18, 1.35, neonMaterial(0x111526,0x5ee7ff,.8), 0, -1.36, 0);
+
+    // --------------------------
+    // Load a GLB with PBR material
+    // --------------------------
+    const modelGroup = new THREE.Group();
+    modelGroup.position.set(-3.2, 0.0, .2);
+    modelGroup.scale.setScalar(1.45);
+    scene.add(modelGroup);
+
+    const gltfLoader = new GLTFLoader();
+    let loadedModel = null;
+
+    gltfLoader.load(
+      MODEL_URL,
+      (gltf) => {
+        loadedModel = gltf.scene;
+
+        loadedModel.traverse((obj) => {
+          if (obj.isMesh) {
+            obj.castShadow = true;
+            obj.receiveShadow = true;
+
+            if (obj.material) {
+              obj.material.envMapIntensity = 1.7;
+            }
+          }
+        });
+
+        // Fit model automatically
+        const box3 = new THREE.Box3().setFromObject(loadedModel);
+        const size = box3.getSize(new THREE.Vector3());
+        const center = box3.getCenter(new THREE.Vector3());
+        const maxDim = Math.max(size.x, size.y, size.z);
+        const scale = 2.25 / maxDim;
+
+        loadedModel.scale.setScalar(scale);
+        loadedModel.position.sub(center.multiplyScalar(scale));
+        loadedModel.position.y = -1.05;
+
+        modelGroup.add(loadedModel);
+
+        status.textContent = '3D MODEL: GLB + PBR READY';
+      },
+      (xhr) => {
+        if (xhr.total) {
+          status.textContent =
+            `3D MODEL: ${Math.round(xhr.loaded / xhr.total * 100)}%`;
+        }
+      },
+      (error) => {
+        console.warn('GLB loading failed:', error);
+        status.textContent = '3D MODEL: DEMO MODE';
+      }
+    );
+
+    // --------------------------
+    // Interaction
+    // --------------------------
+    const raycaster = new THREE.Raycaster();
+    const mouse = new THREE.Vector2();
+
+    function openMenu(action) {
+      const content = {
+        about: {
+          eyebrow:'PROFILE',
+          title:'About Ananya',
+          html:`<p><strong>อนัญญา มั่นจินดา</strong> นักศึกษาชั้นปีที่ 4 เอกเกมและแอนิเมชัน จากมหาวิทยาลัยราชมงคลรัตนโกสินทร์</p>
+                <p>สนใจงาน 3D Modeling, Game Art, Animation และ Interactive Media โดยต้องการพัฒนาทักษะทั้งด้านศิลปะและเทคนิคเพื่อสร้างผลงานที่นำไปใช้งานจริงได้</p>`
+        },
+        projects: {
+          eyebrow:'PORTFOLIO',
+          title:'Selected Projects',
+          html:`<ul>
+                  <li><strong>Lost Beneath the Eternal Sun</strong> — โปรเจกต์เกม 3D / Thesis</li>
+                  <li><strong>3D Environment & Props</strong> — งานสร้างโมเดลและ PBR Texture</li>
+                  <li><strong>Unity Interactive Work</strong> — งานประกอบฉาก แสง Material และ Interaction</li>
+                </ul>
+                <div class="tip">แนะนำให้เปลี่ยนข้อความและเพิ่มลิงก์ไปยังผลงานจริงของคุณในส่วนนี้</div>`
+        },
+        skills: {
+          eyebrow:'TOOLKIT',
+          title:'Skills',
+          html:`<div class="grid">
+                  <div class="card"><b>AUTODESK MAYA</b><p>Modeling · UV · Basic Rigging · Animation</p></div>
+                  <div class="card"><b>UNITY</b><p>Scene · Lighting · Material · Interactive Prototype</p></div>
+                  <div class="card"><b>PBR</b><p>Understanding of Base Color · Roughness · Metallic · Normal</p></div>
+                  <div class="card"><b>CREATIVE</b><p>Game Design · Storytelling · Teamwork · Communication</p></div>
+                </div>`
+        },
+        contact: {
+          eyebrow:'CONTACT',
+          title:'Let's Connect',
+          html:`<p>สามารถใส่ข้อมูลติดต่อจริงของคุณได้ที่ section CONTACT ในไฟล์นี้</p>
+                <div class="tip">ตัวอย่าง: Email · GitHub · LinkedIn · ArtStation · itch.io</div>`
+        }
+      }[action];
+
+      if (!content) return;
+      document.querySelector('#modalEyebrow').textContent = content.eyebrow;
+      document.querySelector('#modalTitle').textContent = content.title;
+      document.querySelector('#modalContent').innerHTML = content.html;
+      document.querySelector('#modal').classList.add('show');
+    }
+
+    function clickButton(action, mesh) {
+      // small press animation
+      mesh.position.z -= .09;
+      setTimeout(() => mesh.position.z += .09, 120);
+      openMenu(action);
+    }
+
+    window.addEventListener('pointerdown', (event) => {
+      mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+      mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+      raycaster.setFromCamera(mouse, camera);
+      const hit = raycaster.intersectObjects(buttons, false)[0];
+
+      if (hit) {
+        clickButton(hit.object.userData.action, hit.object);
+      }
+    });
+
+    document.querySelector('#closeModal').onclick = () =>
+      document.querySelector('#modal').classList.remove('show');
+
+    document.querySelector('#modal').addEventListener('click', (e) => {
+      if (e.target.id === 'modal') e.currentTarget.classList.remove('show');
+    });
+
+    document.querySelectorAll('[data-action]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const action = btn.dataset.action;
+        document.querySelector('#' + action)?.scrollIntoView({behavior:'smooth'});
+      });
+    });
+
+    document.querySelector('#resetCamera').onclick = () => {
+      camera.position.set(5.2,3.2,7.4);
+      controls.target.set(0,1.7,0);
+      controls.update();
+    };
+
+    let auto = true;
+    document.querySelector('#toggleAuto').onclick = (e) => {
+      auto = !auto;
+      controls.autoRotate = auto;
+      e.currentTarget.textContent = `Auto Rotate: ${auto ? 'ON' : 'OFF'}`;
+    };
+
+    // Mouse parallax when not dragging
+    let targetX = 0;
+    let targetY = 0;
+
+    window.addEventListener('pointermove', (e) => {
+      targetX = (e.clientX / window.innerWidth - .5) * .35;
+      targetY = (e.clientY / window.innerHeight - .5) * .18;
+    });
+
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    });
+
+    // --------------------------
+    // Animation
+    // --------------------------
+    const clock = new THREE.Clock();
+
+    function animate() {
+      requestAnimationFrame(animate);
+
+      const t = performance.now();
+      const elapsed = clock.getElapsedTime();
+
+      arcade.rotation.y += (targetX * .10 - arcade.rotation.y) * .025;
+
+      if (loadedModel) {
+        loadedModel.rotation.y = elapsed * .35;
+        loadedModel.position.y = -1.05 + Math.sin(elapsed * 1.5) * .06;
+      }
+
+      stars.rotation.y = elapsed * .006;
+
+      // button breathing
+      buttons.forEach((b, i) => {
+        b.material.emissiveIntensity = 2.5 + Math.sin(elapsed * 2 + i) * .7;
+      });
+
+      // joystick idle movement
+      stick.rotation.z = -.12 + Math.sin(elapsed * 1.1) * .035;
+      knob.position.x = 1.075 + Math.sin(elapsed * 1.1) * .018;
+
+      drawScreen(t);
+
+      controls.update();
+      renderer.render(scene, camera);
+    }
+
+    animate();
+
+    // Hide loader shortly after scene starts
+    setTimeout(() => loaderScreen.classList.add('hidden'), 900);
+  </script>
+</body>
+</html>
