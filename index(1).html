@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ananya 3D Portfolio — Arcade Edition</title>
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@400;500;600;700&family=Press+Start+2P&display=swap');
+
+    :root {
+      --pink: #ff4fa3;
+      --purple: #8b5cf6;
+      --cyan: #35e7ff;
+      --yellow: #ffe66d;
+      --dark: #10101d;
+      --panel: rgba(20, 17, 40, .93);
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #111;
+      font-family: "Kanit", sans-serif;
+    }
+
+    #scene {
+      position: fixed;
+      inset: 0;
+    }
+
+    #hud {
+      position: fixed;
+      top: 18px;
+      left: 18px;
+      z-index: 10;
+      pointer-events: none;
+    }
+
+    .brand {
+      padding: 11px 16px;
+      border: 2px solid rgba(255,255,255,.35);
+      border-radius: 16px;
+      color: white;
+      background: rgba(15, 12, 32, .78);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 8px 30px rgba(0,0,0,.28);
+    }
+
+    .brand strong {
+      display: block;
+      color: var(--cyan);
+      font-family: "Press Start 2P", monospace;
+      font-size: 11px;
+      line-height: 1.6;
+    }
+
+    .brand span {
+      font-size: 13px;
+      opacity: .8;
+    }
+
+    #hint {
+      position: fixed;
+      bottom: 18px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 10;
+      padding: 9px 16px;
+      color: white;
+      background: rgba(15,12,32,.75);
+      border: 1px solid rgba(255,255,255,.22);
+      border-radius: 999px;
+      font-size: 13px;
+      backdrop-filter: blur(8px);
+      pointer-events: none;
+    }
+
+    #modal {
+      position: fixed;
+      inset: 0;
+      z-index: 30;
+      display: none;
+      place-items: center;
+      background: rgba(5,4,15,.58);
+      backdrop-filter: blur(7px);
+      padding: 20px;
+    }
+
+    #modal.show { display: grid; }
+
+    .modal-card {
+      width: min(720px, 94vw);
+      max-height: 82vh;
+      overflow: auto;
+      color: white;
+      background:
+        linear-gradient(145deg, rgba(44,28,74,.98), rgba(13,16,37,.98));
+      border: 3px solid var(--pink);
+      border-radius: 28px;
+      padding: 30px;
+      box-shadow:
+        0 0 0 5px rgba(53,231,255,.12),
+        0 30px 100px rgba(0,0,0,.65);
+    }
+
+    .modal-card h1 {
+      margin: 0 0 8px;
+      color: var(--yellow);
+      font-size: clamp(26px, 5vw, 44px);
+    }
+
+    .modal-card h2 {
+      color: var(--cyan);
+      margin-top: 22px;
+    }
+
+    .modal-card p, .modal-card li {
+      font-size: 16px;
+      line-height: 1.75;
+    }
+
+    .close {
+      float: right;
+      border: 0;
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      color: white;
+      background: var(--pink);
+      font-size: 22px;
+      cursor: pointer;
+      font-weight: 700;
+    }
+
+    .tag {
+      display: inline-block;
+      padding: 6px 12px;
+      margin: 4px;
+      border-radius: 999px;
+      background: rgba(53,231,255,.12);
+      border: 1px solid rgba(53,231,255,.45);
+      color: var(--cyan);
+    }
+
+    .project {
+      margin: 12px 0;
+      padding: 15px;
+      border-radius: 16px;
+      background: rgba(255,255,255,.06);
+      border-left: 4px solid var(--pink);
+    }
+
+    .project b { color: var(--yellow); }
+
+    @media (max-width: 700px) {
+      #hint { font-size: 11px; bottom: 10px; }
+      .brand { padding: 8px 11px; }
+      .brand strong { font-size: 8px; }
+      .brand span { font-size: 11px; }
+    }
+  </style>
+</head>
+
+<body>
+  <div id="scene"></div>
+
+  <div id="hud">
+    <div class="brand">
+      <strong>ANANYA // PORTFOLIO</strong>
+      <span>3D GAME ARCADE • CLICK THE BUTTONS</span>
+    </div>
+  </div>
+
+  <div id="hint">🖱️ ลากเมาส์เพื่อหมุนมุมมอง • Scroll เพื่อซูม • คลิกปุ่มบนตู้เกม</div>
+
+  <div id="modal">
+    <div class="modal-card">
+      <button class="close" id="closeModal">×</button>
+      <div id="modalContent"></div>
+    </div>
+  </div>
+
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"
+    }
+  }
+  </script>
+
+  <script type="module">
+    import * as THREE from "three";
+    import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+
+    // ------------------------------------------------------------
+    // BASIC SETUP
+    // ------------------------------------------------------------
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x11101d);
+    scene.fog = new THREE.Fog(0x11101d, 13, 34);
+
+    const camera = new THREE.PerspectiveCamera(
+      45, innerWidth / innerHeight, 0.1, 100
+    );
+    camera.position.set(7.8, 5.7, 10.5);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(innerWidth, innerHeight);
+    renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.15;
+    document.querySelector("#scene").appendChild(renderer.domElement);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.target.set(0, 2.6, 0);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.055;
+    controls.minDistance = 7;
+    controls.maxDistance = 18;
+    controls.maxPolarAngle = Math.PI * .48;
+    controls.minPolarAngle = Math.PI * .27;
+
+    // ------------------------------------------------------------
+    // LIGHTING
+    // ------------------------------------------------------------
+    scene.add(new THREE.HemisphereLight(0x9fdfff, 0x22102d, 2.1));
+
+    const key = new THREE.DirectionalLight(0xffffff, 3.2);
+    key.position.set(5, 10, 7);
+    key.castShadow = true;
+    key.shadow.mapSize.set(2048, 2048);
+    scene.add(key);
+
+    const pinkLight = new THREE.PointLight(0xff3eaa, 30, 12);
+    pinkLight.position.set(-5, 4, 3);
+    scene.add(pinkLight);
+
+    const cyanLight = new THREE.PointLight(0x27eaff, 28, 12);
+    cyanLight.position.set(5, 3, 3);
+    scene.add(cyanLight);
+
+    // ------------------------------------------------------------
+    // MATERIALS
+    // ------------------------------------------------------------
+    const mat = (color, roughness=.5, metalness=.15, emissive=0x000000, ei=0) =>
+      new THREE.MeshStandardMaterial({
+        color, roughness, metalness,
+        emissive, emissiveIntensity: ei
+      });
+
+    const purple = mat(0x7d45d8, .38, .25);
+    const darkPurple = mat(0x26184d, .45, .25);
+    const pink = mat(0xff3d9e, .35, .25, 0xff0a7a, .18);
+    const cyan = mat(0x27dff4, .3, .25, 0x00d9ff, .2);
+    const yellow = mat(0xffd83d, .4, .2);
+    const black = mat(0x090912, .28, .45);
+    const white = mat(0xf6f2ff, .35, .05);
+    const green = mat(0x49dc75, .55, .05);
+
+    // ------------------------------------------------------------
+    // HELPERS
+    // ------------------------------------------------------------
+    const clickable = [];
+    const floating = [];
+
+    function box(w,h,d,material,x,y,z, bevel=0) {
+      const geo = new THREE.BoxGeometry(w,h,d);
+      const mesh = new THREE.Mesh(geo, material);
+      mesh.position.set(x,y,z);
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      scene.add(mesh);
+      return mesh;
+    }
+
+    function cyl(r1,r2,h,material,x,y,z,segments=32) {
+      const geo = new THREE.CylinderGeometry(r1,r2,h,segments);
+      const mesh = new THREE.Mesh(geo,material);
+      mesh.position.set(x,y,z);
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      scene.add(mesh);
+      return mesh;
+    }
+
+    function textSprite(text, {
+      color="#ffffff", size=56, bg="rgba(0,0,0,0)",
+      width=900, height=180, font="700 52px Kanit"
+    } = {}) {
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext("2d");
+      ctx.clearRect(0,0,width,height);
+      ctx.font = font;
+      ctx.fillStyle = color;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      if (bg !== "rgba(0,0,0,0)") {
+        ctx.fillStyle = bg;
+        ctx.roundRect(5,5,width-10,height-10,35);
+        ctx.fill();
+        ctx.fillStyle = color;
+      }
+      ctx.fillText(text, width/2, height/2);
+      const tex = new THREE.CanvasTexture(canvas);
+      tex.colorSpace = THREE.SRGBColorSpace;
+      const sprite = new THREE.Sprite(new THREE.SpriteMaterial({
+        map: tex, transparent: true, depthWrite: false
+      }));
+      sprite.scale.set(width/height * size, size, 1);
+      return sprite;
+    }
+
+    // ------------------------------------------------------------
+    // CHECKERBOARD FLOOR + WALL DECOR
+    // ------------------------------------------------------------
+    const floor = box(30,.35,24,mat(0x181624,.9,0),0,-.25,0);
+    const tileSize = 1.2;
+    for (let x=-12; x<12; x+=tileSize) {
+      for (let z=-9; z<9; z+=tileSize) {
+        const checker = ((Math.round(x/tileSize)+Math.round(z/tileSize)) & 1);
+        box(tileSize-.02,.035,tileSize-.02,
+          checker ? mat(0x211d38,.8) : mat(0xe94c9b,.8),
+          x+tileSize/2, -.04, z+tileSize/2);
+      }
+    }
+
+    // Back wall
+    box(30,11,.4,mat(0x171526,.8),0,5,-8);
+
+    // Neon wall stripes
+    for (let x=-12; x<=12; x+=3) {
+      box(.08,9,.05,cyan,x,4.5,-7.77);
+    }
+    for (let y=1; y<=8; y+=2.3) {
+      box(29,.045,.05,pink,0,y,-7.75);
+    }
+
+    // ------------------------------------------------------------
+    // ARCADE CABINET
+    // ------------------------------------------------------------
+    const arcade = new THREE.Group();
+    arcade.position.set(0,0,0);
+    scene.add(arcade);
+
+    // Main cabinet body
+    const body = new THREE.Mesh(
+      new THREE.BoxGeometry(5.5,7.4,2.25),
+      purple
+    );
+    body.position.y = 3.55;
+    body.castShadow = true;
+    arcade.add(body);
+
+    // Side panels
+    const sideL = box(.38,7.5,2.45,pink,-2.72,3.65,0);
+    const sideR = box(.38,7.5,2.45,pink, 2.72,3.65,0);
+    sideL.parent = arcade; sideR.parent = arcade;
+    sideL.position.set(-2.72,3.65,0);
+    sideR.position.set(2.72,3.65,0);
+
+    // Top marquee
+    const marquee = box(5.85,1.45,2.42,darkPurple,0,7.0,0);
+    marquee.parent = arcade;
+    marquee.position.set(0,7.0,0);
+
+    const marqueeGlow = box(5.2,1.0,.08,pink,0,7.0,1.22);
+    marqueeGlow.parent = arcade;
+    marqueeGlow.position.set(0,7.0,1.22);
+
+    const title = textSprite("ANANYA", {
+      color:"#fff36d", size:1.05, font:"700 82px Kanit"
+    });
+    title.position.set(0,7.02,1.31);
+    title.parent = arcade;
+    arcade.add(title);
+
+    const sub = textSprite("3D PORTFOLIO", {
+      color:"#ffffff", size:.34, font:"700 32px Kanit"
+    });
+    sub.position.set(0,6.58,1.31);
+    sub.parent = arcade;
+    arcade.add(sub);
+
+    // Screen frame
+    const screenFrame = box(4.85,3.0,.34,black,0,5.15,1.19);
+    screenFrame.parent = arcade;
+    screenFrame.position.set(0,5.15,1.19);
+
+    const screen = box(4.35,2.48,.12,mat(0x111d35,.2,.15,0x233fff,.12),0,5.15,1.4);
+    screen.parent = arcade;
+    screen.position.set(0,5.15,1.4);
+
+    // Screen graphics
+    const screenTitle = textSprite("WELCOME!", {
+      color:"#35e7ff", size:.65, font:"700 58px Kanit"
+    });
+    screenTitle.position.set(0,5.35,1.51);
+    arcade.add(screenTitle);
+
+    const screenName = textSprite("ANANYA MUNJINDA", {
+      color:"#ffffff", size:.28, font:"600 28px Kanit"
+    });
+    screenName.position.set(0,4.88,1.51);
+    arcade.add(screenName);
+
+    const screenHint = textSprite("PRESS A BUTTON", {
+      color:"#ffe66d", size:.23, font:"700 24px Kanit"
+    });
+    screenHint.position.set(0,4.48,1.51);
+    arcade.add(screenHint);
+
+    // Control deck
+    const deck = box(5.55,.55,2.7, darkPurple,0,3.45,.05);
+    deck.parent = arcade;
+    deck.position.set(0,3.45,.05);
+    deck.rotation.x = -0.14;
+
+    // Joystick base
+    const joyBase = cyl(.45,.45,.18,black,-1.65,3.78,.65);
+    joyBase.parent = arcade; joyBase.position.set(-1.65,3.78,.65);
+
+    const stick = cyl(.10,.10,.75,pink,-1.65,4.12,.65);
+    stick.parent = arcade; stick.position.set(-1.65,4.12,.65);
+
+    const ball = cyl(.28,.28,.28,pink,-1.65,4.52,.65,24);
+    ball.parent = arcade; ball.position.set(-1.65,4.52,.65);
+
+    // Buttons
+    const buttons = [
+      {label:"ABOUT", x:-.65, y:3.78, z:.66, color:0xff4fa3, action:"about"},
+      {label:"SKILLS", x:.15, y:3.78, z:.66, color:0x35e7ff, action:"skills"},
+      {label:"WORKS", x:.95, y:3.78, z:.66, color:0xffd83d, action:"works"},
+      {label:"CONTACT", x:1.75, y:3.78, z:.66, color:0x6ff06b, action:"contact"}
+    ];
+
+    function makeButton(b) {
+      const m = mat(b.color,.25,.15,b.color,.35);
+      const mesh = cyl(.30,.30,.22,m,b.x,b.y,b.z,32);
+      mesh.parent = arcade;
+      mesh.position.set(b.x,b.y,b.z);
+      mesh.userData = {action:b.action, baseY:b.y};
+      clickable.push(mesh);
+
+      const label = textSprite(b.label, {
+        color:"#ffffff", size:.15, font:"700 22px Kanit"
+      });
+      label.position.set(b.x,b.y+.25,b.z+.04);
+      label.parent = arcade;
+      label.userData = {buttonLabel:true};
+      floating.push({object:label, baseY:label.position.y, phase:Math.random()*6});
+    }
+
+    buttons.forEach(makeButton);
+
+    // Coin slot
+    const coin = box(.7,.85,.1,black,1.75,2.18,1.18);
+    coin.parent = arcade;
+    coin.position.set(1.75,2.18,1.18);
+
+    const coinText = textSprite("INSERT", {
+      color:"#35e7ff", size:.18, font:"700 22px Kanit"
+    });
+    coinText.position.set(1.75,2.58,1.27);
+    arcade.add(coinText);
+
+    // Bottom neon strip
+    const strip = box(4.8,.18,.08,cyan,0,.55,1.2);
+    strip.parent = arcade;
+    strip.position.set(0,.55,1.2);
+
+    // ------------------------------------------------------------
+    // CUTE STICKERS / DECORATIONS
+    // ------------------------------------------------------------
+    function makeSticker(x,y,z,scale=1,kind="star") {
+      const g = new THREE.Group();
+      g.position.set(x,y,z);
+      g.scale.setScalar(scale);
+
+      if (kind === "cat") {
+        const head = new THREE.Mesh(new THREE.SphereGeometry(.42,24,16), yellow);
+        g.add(head);
+
+        const earGeo = new THREE.ConeGeometry(.16,.35,4);
+        const e1 = new THREE.Mesh(earGeo,pink);
+        e1.position.set(-.28,.32,0); e1.rotation.z=-.35;
+        const e2 = e1.clone();
+        e2.position.x=.28; e2.rotation.z=.35;
+        g.add(e1,e2);
+
+        const eye = mat(0x19151f);
+        [-.14,.14].forEach(ex => {
+          const e = new THREE.Mesh(new THREE.SphereGeometry(.045,12,8),eye);
+          e.position.set(ex,.06,.39);
+          g.add(e);
+        });
+
+        const nose = new THREE.Mesh(new THREE.SphereGeometry(.035,12,8),pink);
+        nose.position.set(0,-.03,.4);
+        g.add(nose);
+      } else if (kind === "heart") {
+        const s1 = new THREE.Mesh(new THREE.SphereGeometry(.24,20,14),pink);
+        const s2 = s1.clone();
+        s1.position.x=-.16; s2.position.x=.16;
+        const cone = new THREE.Mesh(new THREE.ConeGeometry(.3,.65,4),pink);
+        cone.rotation.z=Math.PI;
+        cone.position.y=-.22;
+        g.add(s1,s2,cone);
+      } else {
+        const star = new THREE.Mesh(new THREE.OctahedronGeometry(.38,0),cyan);
+        star.rotation.set(.3,.4,.2);
+        g.add(star);
+      }
+
+      g.traverse(o => { if(o.isMesh){o.castShadow=true;} });
+      scene.add(g);
+      floating.push({object:g, baseY:y, phase:Math.random()*6});
+    }
+
+    makeSticker(-3.08,6.0,1.45,.9,"cat");
+    makeSticker(3.08,5.4,1.45,.72,"heart");
+    makeSticker(-3.08,2.8,1.45,.55,"star");
+    makeSticker(3.08,2.3,1.45,.6,"cat");
+    makeSticker(-2.95,7.35,1.35,.42,"heart");
+    makeSticker(2.95,6.9,1.35,.42,"star");
+
+    // Little sticker dots
+    for(let i=0;i<16;i++){
+      const colors=[pink,cyan,yellow];
+      const c=colors[i%3];
+      const dot=c.clone();
+      const d=new THREE.Mesh(new THREE.SphereGeometry(.06,12,8),dot);
+      d.position.set(
+        -2.9 + Math.random()*5.8,
+        .9 + Math.random()*6.2,
+        1.2 + Math.random()*.12
+      );
+      d.parent=arcade;
+      arcade.add(d);
+    }
+
+    // ------------------------------------------------------------
+    // TREES
+    // ------------------------------------------------------------
+    function makeTree(x,z,s=1) {
+      const trunk = cyl(.22*s,.3*s,1.5*s,mat(0x8a5437,.9),x,.75*s,z);
+      const leaves = new THREE.Group();
+      leaves.position.set(x,1.65*s,z);
+
+      for(let i=0;i<4;i++){
+        const leaf = new THREE.Mesh(
+          new THREE.SphereGeometry((.65-i*.06)*s,18,14),
+          green
+        );
+        leaf.position.set(
+          (Math.random()-.5)*.55*s,
+          i*.25*s,
+          (Math.random()-.5)*.55*s
+        );
+        leaf.scale.y=1.15;
+        leaf.castShadow=true;
+        leaves.add(leaf);
+      }
+      scene.add(leaves);
+      return {trunk, leaves};
+    }
+
+    makeTree(-7,-2,1.35);
+    makeTree(7,-2,1.25);
+    makeTree(-7,4,1.0);
+    makeTree(7,4,.95);
+    makeTree(-5,7,.8);
+    makeTree(5,7,.8);
+
+    // ------------------------------------------------------------
+    // FLOATING PIXEL CUBES
+    // ------------------------------------------------------------
+    for(let i=0;i<22;i++){
+      const cube = box(
+        .12+Math.random()*.25,
+        .12+Math.random()*.25,
+        .12+Math.random()*.25,
+        [pink,cyan,yellow][i%3],
+        (Math.random()-.5)*16,
+        1.5+Math.random()*7,
+        -1+Math.random()*7
+      );
+      cube.material = cube.material.clone();
+      cube.userData.phase=Math.random()*Math.PI*2;
+      floating.push({object:cube,baseY:cube.position.y,phase:cube.userData.phase});
+    }
+
+    // ------------------------------------------------------------
+    // PORTFOLIO CONTENT
+    // ------------------------------------------------------------
+    const content = {
+      about: `
+        <h1>👾 ABOUT ME</h1>
+        <p>สวัสดีค่ะ! ฉันชื่อ <b>อนัญญา มั่นจินดา</b></p>
+        <p>นักศึกษาชั้นปีที่ 4 สาขาเกมและแอนิเมชัน
+        จากมหาวิทยาลัยเทคโนโลยีราชมงคลรัตนโกสินทร์</p>
+        <p>ฉันสนใจงานด้าน <b>3D Art, Game Development, Animation</b>
+        และการออกแบบประสบการณ์สำหรับสื่อดิจิทัล</p>
+        <h2>🎮 MY GOAL</h2>
+        <p>อยากพัฒนาทักษะด้าน 3D และเกมให้สามารถสร้างผลงาน
+        ที่มีทั้งความสวยงาม ความคิดสร้างสรรค์ และประสบการณ์ที่น่าสนใจ</p>
+      `,
+      skills: `
+        <h1>🕹️ SKILLS</h1>
+        <h2>Software</h2>
+        <span class="tag">Autodesk Maya</span>
+        <span class="tag">Unity</span>
+        <span class="tag">Blender</span>
+        <span class="tag">Adobe Photoshop</span>
+        <span class="tag">Adobe Illustrator</span>
+        <h2>Creative Skills</h2>
+        <span class="tag">3D Modeling</span>
+        <span class="tag">3D Animation</span>
+        <span class="tag">Game Design</span>
+        <span class="tag">Level Design</span>
+        <span class="tag">Digital Media</span>
+        <h2>Soft Skills</h2>
+        <span class="tag">Teamwork</span>
+        <span class="tag">Communication</span>
+        <span class="tag">Problem Solving</span>
+      `,
+      works: `
+        <h1>⭐ SELECTED WORKS</h1>
+        <div class="project">
+          <b>LOST BENEATH THE ETERNAL SUN</b>
+          <p>เกม 3 มิติที่พัฒนาขึ้นเป็นปริญญานิพนธ์
+          เน้นการสำรวจ การแก้ไขปัญหา และบรรยากาศของโลกเกม</p>
+        </div>
+        <div class="project">
+          <b>3D GAME / UNITY PROJECTS</b>
+          <p>ผลงานทดลองด้าน Unity, XR/VR, การจัดฉาก 3D,
+          Lighting, Character และ Interaction</p>
+        </div>
+        <div class="project">
+          <b>3D MODELING & ANIMATION</b>
+          <p>ผลงานโมเดล 3D และแอนิเมชันที่สร้างจากการเรียน
+          และโปรเจกต์ส่วนตัว</p>
+        </div>
+        <p><i>สามารถนำปุ่มนี้ไปต่อยอดเป็นลิงก์ไปยังหน้า GitHub,
+        ArtStation, YouTube หรือหน้ารวมผลงานจริงได้</i></p>
+      `,
+      contact: `
+        <h1>💌 CONTACT</h1>
+        <p>ขอบคุณที่แวะเข้ามาชม Portfolio ของฉันค่ะ!</p>
+        <h2>Let's Create Something Cool ✨</h2>
+        <p>📧 Email: your-email@example.com</p>
+        <p>🌐 GitHub: github.com/yourusername</p>
+        <p>🎨 ArtStation: artstation.com/yourusername</p>
+        <p>📱 Instagram: @yourusername</p>
+        <p style="opacity:.7">※ เปลี่ยนข้อมูลด้านบนเป็นข้อมูลจริงของคุณได้เลย</p>
+      `
+    };
+
+    const modal=document.querySelector("#modal");
+    const modalContent=document.querySelector("#modalContent");
+
+    function openModal(key) {
+      modalContent.innerHTML=content[key];
+      modal.classList.add("show");
+    }
+
+    document.querySelector("#closeModal").onclick=()=>modal.classList.remove("show");
+    modal.onclick=(e)=>{ if(e.target===modal) modal.classList.remove("show"); };
+    addEventListener("keydown",(e)=>{if(e.key==="Escape") modal.classList.remove("show");});
+
+    // ------------------------------------------------------------
+    // RAYCAST CLICK
+    // ------------------------------------------------------------
+    const raycaster = new THREE.Raycaster();
+    const pointer = new THREE.Vector2();
+
+    renderer.domElement.addEventListener("pointerdown", e=>{
+      pointer.x=(e.clientX/innerWidth)*2-1;
+      pointer.y=-(e.clientY/innerHeight)*2+1;
+      raycaster.setFromCamera(pointer,camera);
+
+      const hits=raycaster.intersectObjects(clickable,true);
+      if(hits.length){
+        const b=hits[0].object;
+        openModal(b.userData.action);
+
+        // button bounce
+        const original=b.position.y;
+        b.position.y=original-.13;
+        setTimeout(()=>b.position.y=original,110);
+      }
+    });
+
+    // Hover cursor
+    renderer.domElement.addEventListener("pointermove", e=>{
+      pointer.x=(e.clientX/innerWidth)*2-1;
+      pointer.y=-(e.clientY/innerHeight)*2+1;
+      raycaster.setFromCamera(pointer,camera);
+      const hits=raycaster.intersectObjects(clickable,true);
+      renderer.domElement.style.cursor=hits.length ? "pointer" : "grab";
+    });
+
+    // ------------------------------------------------------------
+    // ANIMATION
+    // ------------------------------------------------------------
+    const clock=new THREE.Clock();
+
+    function animate(){
+      requestAnimationFrame(animate);
+      const t=clock.getElapsedTime();
+
+      floating.forEach((f,i)=>{
+        f.object.position.y=f.baseY + Math.sin(t*1.25+f.phase)*.08;
+        f.object.rotation.y += .004 + (i%3)*.001;
+      });
+
+      // gentle cabinet breathing
+      arcade.position.y=Math.sin(t*.75)*.025;
+
+      controls.update();
+      renderer.render(scene,camera);
+    }
+    animate();
+
+    // ------------------------------------------------------------
+    // RESPONSIVE
+    // ------------------------------------------------------------
+    addEventListener("resize",()=>{
+      camera.aspect=innerWidth/innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(innerWidth,innerHeight);
+    });
+  </script>
+</body>
+</html>
